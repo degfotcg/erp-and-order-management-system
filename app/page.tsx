@@ -9,6 +9,13 @@ export const dynamic = 'force-dynamic'
 
 type Seat = { role: 'ceo' | 'accountant' | 'manager'; full_name: string; is_claimed: boolean }
 
+// Used when the available_seats RPC is unavailable; the database still decides the final role on sign-up.
+const DEFAULT_SEATS: Seat[] = [
+  { role: 'ceo', full_name: 'Chief Executive Officer', is_claimed: false },
+  { role: 'accountant', full_name: 'Accountant', is_claimed: false },
+  { role: 'manager', full_name: 'Operations Manager', is_claimed: false },
+]
+
 const WORKFLOW = [
   { icon: Building2, title: 'Draft & quote', body: 'Manager builds orders with line items and cost estimates.' },
   { icon: FileSignature, title: 'Sign & invoice', body: 'CEO signs the quote, Accounts stamps an A4 invoice.' },
@@ -21,7 +28,11 @@ export default async function HomePage() {
 
   if (user && profile?.role) redirect(`/${profile.role}`)
 
-  const { data: seats } = await supabase.rpc('available_seats')
+  const { data: seatData, error: seatError } = await supabase.rpc('available_seats')
+  const seats: Seat[] =
+    !seatError && Array.isArray(seatData) && seatData.length > 0
+      ? (seatData as Seat[])
+      : DEFAULT_SEATS
 
   return (
     <main className="flex min-h-svh flex-col lg:flex-row">
@@ -65,7 +76,7 @@ export default async function HomePage() {
             <SignOutButton />
           </div>
         ) : (
-          <AuthPortal seats={(seats as Seat[] | null) ?? []} />
+          <AuthPortal seats={seats} />
         )}
       </section>
     </main>

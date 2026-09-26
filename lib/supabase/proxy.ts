@@ -54,11 +54,11 @@ export async function updateSession(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('*')
     .eq('id', user.id)
     .maybeSingle()
 
-  const role = normalizeRole(profile?.role) ?? (profile ? normalizeRole(user.user_metadata?.role) : null)
+  const role = normalizeRole(profile?.role) ?? normalizeRole(user.user_metadata?.role)
   if (!role) return redirectTo('/')
 
   for (const [prefix, required] of Object.entries(ROLE_ROUTES)) {

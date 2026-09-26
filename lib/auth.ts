@@ -10,17 +10,31 @@ export async function getSessionProfile() {
   } = await supabase.auth.getUser()
   if (!user) return { supabase, user: null, profile: null }
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('profiles')
-    .select('id, email, full_name, role')
+    .select('*')
     .eq('id', user.id)
-    .maybeSingle<Omit<Profile, 'role'> & { role: string | null }>()
+    .maybeSingle<Record<string, unknown>>()
 
-  const profile: Profile | null = data
-    ? { ...data, role: normalizeRole(data.role) ?? normalizeRole(user.user_metadata?.role) }
-    : null
+  if (error) console.error('Failed to load profile:', error.message)
 
-  return { supabase, user, profile, rawRole: data?.role ?? null }
+  const rawRole = typeof data?.role === 'string' ? data.role : null
+  const cleanRole = normalizeRole(rawRole) ?? normalizeRole(user.user_metadata?.role)
+
+  const profile: Profile | null =
+    data || cleanRole
+      ? {
+          id: user.id,
+          email: (data?.email as string | null | undefined) ?? user.email ?? null,
+          full_name:
+            (data?.full_name as string | null | undefined) ??
+            (user.user_metadata?.full_name as string | undefined) ??
+            null,
+          role: cleanRole,
+        }
+      : null
+
+  return { supabase, user, profile, rawRole }
 }
 
 export async function requireRole(allowed: Role | Role[]) {

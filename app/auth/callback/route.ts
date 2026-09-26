@@ -20,9 +20,9 @@ export async function GET(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('*')
     .eq('id', data.user.id)
-    .maybeSingle<{ role: string | null }>()
+    .maybeSingle<{ role?: string | null }>()
 
   const role = normalizeRole(profile?.role) ?? normalizeRole(data.user.user_metadata?.role)
   const destination = role ? `/${role}` : '/'

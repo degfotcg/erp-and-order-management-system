@@ -1,15 +1,9 @@
 import type { Role } from './types'
 
-const ROLE_ALIASES: Record<string, Role> = {
-  ceo: 'ceo',
-  'chief executive officer': 'ceo',
-  manager: 'manager',
-  'operations manager': 'manager',
-  accountant: 'accountant',
-}
-
-export function normalizeRole(raw: unknown): Role | null {
-  if (typeof raw !== 'string') return null
-  const key = raw.trim().toLowerCase().replace(/[\s_-]+/g, ' ')
-  return ROLE_ALIASES[key] ?? null
+export function normalizeRole(value: unknown): Role | null {
+  const raw = (typeof value === 'string' ? value : '').toLowerCase()
+  if (raw.includes('ceo') || raw.includes('chief executive')) return 'ceo'
+  if (raw.includes('account')) return 'accountant'
+  if (raw.includes('manager')) return 'manager'
+  return null
 }

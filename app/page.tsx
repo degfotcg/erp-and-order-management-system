@@ -66,7 +66,7 @@ export default async function HomePage() {
       </section>
 
       <section className="flex flex-1 items-center justify-center px-6 py-12">
-        {user && profile ? (
+        {user && rawRole ? (
           <div className="flex max-w-sm flex-col gap-4 text-center">
             <h2 className="text-xl font-semibold">Role not recognized</h2>
             <p className="text-sm leading-relaxed text-muted-foreground">

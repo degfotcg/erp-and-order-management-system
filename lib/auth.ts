@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from './supabase/server'
+import { normalizeRole } from './roles'
 import type { Profile, Role } from './types'
 
 export async function getSessionProfile() {
@@ -9,13 +10,17 @@ export async function getSessionProfile() {
   } = await supabase.auth.getUser()
   if (!user) return { supabase, user: null, profile: null }
 
-  const { data: profile } = await supabase
+  const { data } = await supabase
     .from('profiles')
     .select('id, email, full_name, role')
     .eq('id', user.id)
-    .maybeSingle<Profile>()
+    .maybeSingle<Omit<Profile, 'role'> & { role: string | null }>()
 
-  return { supabase, user, profile }
+  const profile: Profile | null = data
+    ? { ...data, role: normalizeRole(data.role) ?? normalizeRole(user.user_metadata?.role) }
+    : null
+
+  return { supabase, user, profile, rawRole: data?.role ?? null }
 }
 
 export async function requireRole(allowed: Role | Role[]) {

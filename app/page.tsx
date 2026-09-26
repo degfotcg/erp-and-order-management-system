@@ -24,7 +24,7 @@ const WORKFLOW = [
 ]
 
 export default async function HomePage() {
-  const { supabase, user, profile } = await getSessionProfile()
+  const { supabase, user, profile, rawRole } = await getSessionProfile()
 
   if (user && profile?.role) redirect(`/${profile.role}`)
 
@@ -66,7 +66,17 @@ export default async function HomePage() {
       </section>
 
       <section className="flex flex-1 items-center justify-center px-6 py-12">
-        {user && !profile?.role ? (
+        {user && profile ? (
+          <div className="flex max-w-sm flex-col gap-4 text-center">
+            <h2 className="text-xl font-semibold">Role not recognized</h2>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Your profile ({user.email}) exists, but its role
+              {rawRole ? <> &ldquo;<span className="font-medium text-foreground">{rawRole}</span>&rdquo;</> : ' is empty and'}{' '}
+              doesn&apos;t match CEO, Operations Manager, or Accountant. Ask an administrator to update it.
+            </p>
+            <SignOutButton />
+          </div>
+        ) : user ? (
           <div className="flex max-w-sm flex-col gap-4 text-center">
             <h2 className="text-xl font-semibold">No seat assigned</h2>
             <p className="text-sm leading-relaxed text-muted-foreground">

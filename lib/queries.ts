@@ -13,11 +13,25 @@ const EXPENSE_COLUMNS =
   'id, order_id, requested_by, amount, purpose, bank_name, account_name, account_number, status, ceo_decided_at, disbursement_method, disbursement_reference, receipt_path, disbursed_at, acknowledged_at, created_at'
 
 export async function getOrderDetail(supabase: SupabaseClient, id: string) {
-  const { data: orderData } = await supabase
+  let { data: orderData, error: orderError } = await supabase
     .from('orders')
     .select(`${ORDER_LIST_COLUMNS}, ceo_signature, accountant_signature`)
     .eq('id', id)
     .maybeSingle()
+
+  // Undefined column (42703): the signature columns are missing in this database, so load the order without them.
+  if (orderError?.code === '42703') {
+    console.error('[orders] signature columns missing, retrying without them:', orderError.message)
+    ;({ data: orderData, error: orderError } = await supabase
+      .from('orders')
+      .select(ORDER_LIST_COLUMNS)
+      .eq('id', id)
+      .maybeSingle())
+  }
+  if (orderError) {
+    console.error('[orders] failed to load order', id, orderError.code, orderError.message)
+  }
+
   const order = orderData as unknown as Order | null
   if (!order) return null
 

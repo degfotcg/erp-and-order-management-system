@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { normalizeRole } from '@/lib/roles'
 import { createClient } from '@/lib/supabase/server'
-
-const DASHBOARD_ROLES = new Set(['ceo', 'accountant', 'manager'])
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
@@ -25,8 +24,8 @@ export async function GET(request: NextRequest) {
     .eq('id', data.user.id)
     .maybeSingle<{ role: string | null }>()
 
-  const role = profile?.role ?? (data.user.user_metadata?.role as string | undefined)
-  const destination = role && DASHBOARD_ROLES.has(role) ? `/${role}` : '/'
+  const role = normalizeRole(profile?.role) ?? normalizeRole(data.user.user_metadata?.role)
+  const destination = role ? `/${role}` : '/'
 
   return NextResponse.redirect(`${origin}${destination}`)
 }

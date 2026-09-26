@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { SUPABASE_ANON_KEY, SUPABASE_URL, cookieOptions } from './config'
+import { normalizeRole } from '../roles'
 
 const ROLE_ROUTES: Record<string, string> = {
   '/ceo': 'ceo',
@@ -57,7 +58,7 @@ export async function updateSession(request: NextRequest) {
     .eq('id', user.id)
     .maybeSingle()
 
-  const role = profile?.role as string | null | undefined
+  const role = normalizeRole(profile?.role) ?? (profile ? normalizeRole(user.user_metadata?.role) : null)
   if (!role) return redirectTo('/')
 
   for (const [prefix, required] of Object.entries(ROLE_ROUTES)) {

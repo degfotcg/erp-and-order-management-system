@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { MailCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -90,6 +91,7 @@ function LoginForm() {
 function ClaimSeatForm({ seats }: { seats: Seat[] }) {
   const [step, setStep] = useState<'register' | 'verify'>('register')
   const [email, setEmail] = useState('')
+  const [linkSent, setLinkSent] = useState(false)
 
   if (seats.every((s) => s.is_claimed) && step === 'register') {
     return (
@@ -105,11 +107,28 @@ function ClaimSeatForm({ seats }: { seats: Seat[] }) {
 
   if (step === 'verify') {
     return (
-      <VerifyCodeForm
-        email={email}
-        onEmailChange={setEmail}
-        onBack={() => setStep('register')}
-      />
+      <div className="flex flex-col gap-4">
+        {linkSent && (
+          <div
+            role="status"
+            className="flex items-start gap-3 rounded-lg border border-primary/30 bg-primary/5 p-4 text-sm"
+          >
+            <MailCheck className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
+            <p className="leading-relaxed">
+              <span className="font-semibold">Confirmation link sent to your email!</span> Please check
+              your inbox and click the link to finish activating your seat.
+            </p>
+          </div>
+        )}
+        <VerifyCodeForm
+          email={email}
+          onEmailChange={setEmail}
+          onBack={() => {
+            setLinkSent(false)
+            setStep('register')
+          }}
+        />
+      </div>
     )
   }
 
@@ -119,7 +138,10 @@ function ClaimSeatForm({ seats }: { seats: Seat[] }) {
         seats={seats}
         email={email}
         onEmailChange={setEmail}
-        onRegistered={() => setStep('verify')}
+        onRegistered={() => {
+          setLinkSent(true)
+          setStep('verify')
+        }}
       />
       <button
         type="button"
@@ -164,7 +186,7 @@ function RegisterSeatForm({
       password,
       options: {
         emailRedirectTo: emailRedirect(),
-        data: { requested_role: role },
+        data: { role, requested_role: role },
       },
     })
     setPending(false)
